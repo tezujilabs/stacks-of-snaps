@@ -37,7 +37,7 @@ namespace StacksOfSnaps
                 ExecuteButton.IsEnabled = false;
                 OutputDisplay.Text = "Executing command...\n";
 
-                await Task.Run(() => ExecuteCommand(command));
+                await ExecuteCommand(command);
             }
             catch (Exception ex)
             {
@@ -51,6 +51,8 @@ namespace StacksOfSnaps
 
         private async Task ExecuteCommand(string command)
         {
+            // Note: This executes commands directly via cmd.exe as per requirements.
+            // Command injection is an inherent risk - users should only run trusted commands.
             ProcessStartInfo processInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
@@ -67,14 +69,13 @@ namespace StacksOfSnaps
                 
                 StringBuilder output = new StringBuilder();
                 StringBuilder error = new StringBuilder();
-                object outputLock = new object();
-                object errorLock = new object();
+                object dataLock = new object();
 
                 process.OutputDataReceived += (s, args) =>
                 {
                     if (args.Data != null)
                     {
-                        lock (outputLock)
+                        lock (dataLock)
                         {
                             output.AppendLine(args.Data);
                         }
@@ -85,7 +86,7 @@ namespace StacksOfSnaps
                 {
                     if (args.Data != null)
                     {
-                        lock (errorLock)
+                        lock (dataLock)
                         {
                             error.AppendLine(args.Data);
                         }
@@ -97,8 +98,14 @@ namespace StacksOfSnaps
                 process.BeginErrorReadLine();
                 await process.WaitForExitAsync();
 
-                string result = output.ToString();
-                string errorOutput = error.ToString();
+                // After WaitForExitAsync, all data handlers have completed
+                string result;
+                string errorOutput;
+                lock (dataLock)
+                {
+                    result = output.ToString();
+                    errorOutput = error.ToString();
+                }
 
                 // Update UI on the UI thread
                 await Dispatcher.InvokeAsync(() =>
