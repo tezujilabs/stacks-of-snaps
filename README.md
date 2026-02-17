@@ -42,7 +42,9 @@ This application uses a **database-first** approach with Entity Framework Core. 
    .\scaffold-db.ps1
    ```
 
-   For more options and examples, see [SCAFFOLD-GUIDE.md](SCAFFOLD-GUIDE.md)
+   **Documentation:**
+   - Quick examples: [QUICK-START.md](QUICK-START.md)
+   - Full guide: [SCAFFOLD-GUIDE.md](SCAFFOLD-GUIDE.md)
 
 ## EF Core Scaffolding
 
@@ -73,6 +75,8 @@ The repository includes a PowerShell script (`scaffold-db.ps1`) to automate Enti
 - Provides colored output and helpful error messages
 
 For detailed documentation, see [SCAFFOLD-GUIDE.md](SCAFFOLD-GUIDE.md)
+
+For quick examples, see [QUICK-START.md](QUICK-START.md)
 
 ## Building the Application
 

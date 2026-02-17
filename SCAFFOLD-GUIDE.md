@@ -2,6 +2,8 @@
 
 This guide explains how to use the PowerShell script to scaffold Entity Framework Core models from an existing database.
 
+> **Quick Start:** For common usage examples, see [QUICK-START.md](QUICK-START.md)
+
 ## Prerequisites
 
 1. **.NET SDK** - Must be installed (version 8.0 or later)
