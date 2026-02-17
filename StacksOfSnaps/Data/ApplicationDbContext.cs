@@ -53,6 +53,13 @@ namespace StacksOfSnaps.Data
             OnModelCreatingPartial(modelBuilder);
         }
 
+        /// <summary>
+        /// Partial method for extending model configuration after scaffolding.
+        /// This method is called from OnModelCreating and can be implemented in a separate
+        /// partial class file to add custom model configurations without modifying
+        /// the auto-generated code from Entity Framework scaffolding.
+        /// </summary>
+        /// <param name="modelBuilder">The builder being used to construct the model for this context.</param>
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
