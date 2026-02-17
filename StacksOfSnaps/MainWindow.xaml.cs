@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +20,110 @@ namespace StacksOfSnaps
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private async void ExecuteButton_Click(object sender, RoutedEventArgs e)
+        {
+            string command = CommandInput.Text.Trim();
+            
+            if (string.IsNullOrEmpty(command))
+            {
+                OutputDisplay.Text = "Please enter a command to execute.";
+                return;
+            }
+
+            try
+            {
+                ExecuteButton.IsEnabled = false;
+                OutputDisplay.Text = "Executing command...\n";
+
+                await ExecuteCommand(command);
+            }
+            catch (Exception ex)
+            {
+                OutputDisplay.Text = $"Error executing command:\n{ex.Message}";
+            }
+            finally
+            {
+                ExecuteButton.IsEnabled = true;
+            }
+        }
+
+        private async Task ExecuteCommand(string command)
+        {
+            // Note: This executes commands directly via cmd.exe as per requirements.
+            // Command injection is an inherent risk - users should only run trusted commands.
+            ProcessStartInfo processInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c {command}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (Process process = new Process())
+            {
+                process.StartInfo = processInfo;
+                
+                StringBuilder output = new StringBuilder();
+                StringBuilder error = new StringBuilder();
+                object dataLock = new object();
+
+                process.OutputDataReceived += (s, args) =>
+                {
+                    if (args.Data != null)
+                    {
+                        lock (dataLock)
+                        {
+                            output.AppendLine(args.Data);
+                        }
+                    }
+                };
+
+                process.ErrorDataReceived += (s, args) =>
+                {
+                    if (args.Data != null)
+                    {
+                        lock (dataLock)
+                        {
+                            error.AppendLine(args.Data);
+                        }
+                    }
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                await process.WaitForExitAsync();
+
+                // After WaitForExitAsync, all data handlers have completed
+                string result;
+                string errorOutput;
+                lock (dataLock)
+                {
+                    result = output.ToString();
+                    errorOutput = error.ToString();
+                }
+
+                // Update UI on the UI thread
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (!string.IsNullOrEmpty(errorOutput))
+                    {
+                        OutputDisplay.Text = $"Error:\n{errorOutput}\n\nOutput:\n{result}";
+                    }
+                    else if (!string.IsNullOrEmpty(result))
+                    {
+                        OutputDisplay.Text = result;
+                    }
+                    else
+                    {
+                        OutputDisplay.Text = "Command executed successfully with no output.";
+                    }
+                });
+            }
         }
     }
 }
