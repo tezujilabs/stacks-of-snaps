@@ -5,23 +5,36 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StacksOfSnaps"
         mc:Ignorable="d"
-        Title="Command Executor" Height="450" Width="800">
+        Title="Command Executor" Height="500" Width="800">
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
+        <!-- Warning Message -->
+        <Border Grid.Row="0" 
+                Background="#FFF4E5" 
+                BorderBrush="#FFD700" 
+                BorderThickness="1" 
+                Padding="10" 
+                Margin="0,0,0,10">
+            <TextBlock TextWrapping="Wrap" FontWeight="Bold" Foreground="#B8860B">
+                ⚠️ Warning: This application executes system commands directly. Only run commands you trust.
+            </TextBlock>
+        </Border>
+        
         <!-- Command Input -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
             <Label Content="Enter Command:" FontWeight="Bold"/>
             <TextBox x:Name="CommandInput" Height="30" FontSize="14" VerticalContentAlignment="Center"/>
         </StackPanel>
         
         <!-- Execute Button -->
         <Button x:Name="ExecuteButton" 
-                Grid.Row="1" 
+                Grid.Row="2" 
                 Content="Execute Command" 
                 Height="40" 
                 FontSize="16" 
@@ -30,7 +43,7 @@
                 Click="ExecuteButton_Click"/>
         
         <!-- Output Display -->
-        <StackPanel Grid.Row="2">
+        <StackPanel Grid.Row="3">
             <Label Content="Output:" FontWeight="Bold"/>
             <TextBox x:Name="OutputDisplay" 
                      TextWrapping="Wrap" 

@@ -22,7 +22,7 @@ namespace StacksOfSnaps
             InitializeComponent();
         }
 
-        private void ExecuteButton_Click(object sender, RoutedEventArgs e)
+        private async void ExecuteButton_Click(object sender, RoutedEventArgs e)
         {
             string command = CommandInput.Text.Trim();
             
@@ -37,43 +37,72 @@ namespace StacksOfSnaps
                 ExecuteButton.IsEnabled = false;
                 OutputDisplay.Text = "Executing command...\n";
 
-                ProcessStartInfo processInfo = new ProcessStartInfo
+                await Task.Run(() => ExecuteCommand(command));
+            }
+            catch (Exception ex)
+            {
+                OutputDisplay.Text = $"Error executing command:\n{ex.Message}";
+            }
+            finally
+            {
+                ExecuteButton.IsEnabled = true;
+            }
+        }
+
+        private async Task ExecuteCommand(string command)
+        {
+            ProcessStartInfo processInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c {command}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (Process process = new Process())
+            {
+                process.StartInfo = processInfo;
+                
+                StringBuilder output = new StringBuilder();
+                StringBuilder error = new StringBuilder();
+                object outputLock = new object();
+                object errorLock = new object();
+
+                process.OutputDataReceived += (s, args) =>
                 {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c {command}",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    if (args.Data != null)
+                    {
+                        lock (outputLock)
+                        {
+                            output.AppendLine(args.Data);
+                        }
+                    }
                 };
 
-                using (Process process = new Process())
+                process.ErrorDataReceived += (s, args) =>
                 {
-                    process.StartInfo = processInfo;
-                    
-                    StringBuilder output = new StringBuilder();
-                    StringBuilder error = new StringBuilder();
-
-                    process.OutputDataReceived += (s, args) =>
+                    if (args.Data != null)
                     {
-                        if (args.Data != null)
-                            output.AppendLine(args.Data);
-                    };
-
-                    process.ErrorDataReceived += (s, args) =>
-                    {
-                        if (args.Data != null)
+                        lock (errorLock)
+                        {
                             error.AppendLine(args.Data);
-                    };
+                        }
+                    }
+                };
 
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    process.WaitForExit();
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                await process.WaitForExitAsync();
 
-                    string result = output.ToString();
-                    string errorOutput = error.ToString();
+                string result = output.ToString();
+                string errorOutput = error.ToString();
 
+                // Update UI on the UI thread
+                await Dispatcher.InvokeAsync(() =>
+                {
                     if (!string.IsNullOrEmpty(errorOutput))
                     {
                         OutputDisplay.Text = $"Error:\n{errorOutput}\n\nOutput:\n{result}";
@@ -86,15 +115,7 @@ namespace StacksOfSnaps
                     {
                         OutputDisplay.Text = "Command executed successfully with no output.";
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                OutputDisplay.Text = $"Error executing command:\n{ex.Message}";
-            }
-            finally
-            {
-                ExecuteButton.IsEnabled = true;
+                });
             }
         }
     }
