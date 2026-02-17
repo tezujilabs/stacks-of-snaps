@@ -36,15 +36,14 @@ namespace StacksOfSnaps.Data
                 // Read connection string from App.config
                 var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString;
                 
-                if (!string.IsNullOrEmpty(connectionString))
+                if (string.IsNullOrEmpty(connectionString))
                 {
-                    optionsBuilder.UseSqlServer(connectionString);
+                    throw new InvalidOperationException(
+                        "Database connection string 'DefaultConnection' is not configured in App.config. " +
+                        "Please add a connection string to the <connectionStrings> section of App.config.");
                 }
-                else
-                {
-                    // Fallback to a default connection string if not configured
-                    optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=StacksOfSnapsDb;Trusted_Connection=True;");
-                }
+                
+                optionsBuilder.UseSqlServer(connectionString);
             }
         }
 
